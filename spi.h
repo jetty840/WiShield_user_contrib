@@ -44,8 +44,13 @@
 
 
 #ifdef USE_DIG0_INTR
-#define ZG2100_ISR_DISABLE()	(EIMSK &= ~(0x01))
-#define ZG2100_ISR_ENABLE()		(EIMSK |= 0x01)
+    #if  defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+        #define ZG2100_ISR_DISABLE()	(EIMSK &= ~(0x10))
+        #define ZG2100_ISR_ENABLE()		(EIMSK |= 0x10)
+    #else
+        #define ZG2100_ISR_DISABLE()	(EIMSK &= ~(0x01))
+        #define ZG2100_ISR_ENABLE()		(EIMSK |= 0x01)
+    #endif
 #define ZG2100_ISR_GET(X)		(X = EIMSK)
 #define ZG2100_ISR_SET(X)		(EIMSK = X)
 #endif
@@ -71,19 +76,27 @@
 #define ZG2100_INTR						BIT0
 #endif
 
-#define SPI0_SS_BIT						BIT2
+#if defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    #define SPI0_SS_BIT						BIT0
+    #define SPI0_SCLK_BIT					BIT1
+    #define	SPI0_MOSI_BIT					BIT2
+    #define	SPI0_MISO_BIT					BIT3
+#else
+    #define SPI0_SS_BIT						BIT2
+    #define SPI0_SCLK_BIT					BIT5
+    #define	SPI0_MOSI_BIT					BIT3
+    #define	SPI0_MISO_BIT					BIT4
+#endif
+
 #define SPI0_SS_DDR						DDRB
 #define SPI0_SS_PORT					PORTB
 
-#define SPI0_SCLK_BIT					BIT5
 #define SPI0_SCLK_DDR					DDRB
 #define SPI0_SCLK_PORT					PORTB
 
-#define	SPI0_MOSI_BIT					BIT3
 #define SPI0_MOSI_DDR					DDRB
 #define SPI0_MOSI_PORT					PORTB
 
-#define	SPI0_MISO_BIT					BIT4
 #define SPI0_MISO_DDR					DDRB
 #define SPI0_MISO_PORT					PORTB
 
@@ -99,17 +112,33 @@
 
 // PB4(MISO), PB3(MOSI), PB5(SCK), PB2(/SS)         // CS=1, waiting for SPI start // SPI mode 0, 8MHz
 #ifdef USE_DIG8_INTR
-#define SPI0_Init()						DDRB  |= SPI0_SS_BIT|SPI0_SCLK_BIT|SPI0_MOSI_BIT|LEDConn_BIT;\
-										DDRB  &= ~(SPI0_MISO_BIT|ZG2100_INTR);\
-										PORTB = SPI0_SS_BIT;\
-										SPCR  = 0x50;\
-										SPSR  = 0x01
+    #if defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+        #define SPI0_Init()				DDRB  |= SPI0_SS_BIT|SPI0_SCLK_BIT|SPI0_MOSI_BIT;\
+                                        DDRB  &= ~(SPI0_MISO_BIT|ZG2100_INTR);\
+                                        PORTB = SPI0_SS_BIT;\
+                                        SPCR  = 0x50;\
+                                        SPSR  = 0x01
+    #else
+        #define SPI0_Init()				DDRB  |= SPI0_SS_BIT|SPI0_SCLK_BIT|SPI0_MOSI_BIT|LEDConn_BIT;\
+                                        DDRB  &= ~(SPI0_MISO_BIT|ZG2100_INTR);\
+                                        PORTB = SPI0_SS_BIT;\
+                                        SPCR  = 0x50;\
+                                        SPSR  = 0x01
+    #endif
 #else
-#define SPI0_Init()						DDRB  |= SPI0_SS_BIT|SPI0_SCLK_BIT|SPI0_MOSI_BIT|LEDConn_BIT;\
-										DDRB  &= ~SPI0_MISO_BIT;\
-										PORTB = SPI0_SS_BIT;\
-										SPCR  = 0x50;\
-										SPSR  = 0x01
+    #if defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+        #define SPI0_Init()				DDRB  |= SPI0_SS_BIT|SPI0_SCLK_BIT|SPI0_MOSI_BIT;\
+                                        DDRB  &= ~SPI0_MISO_BIT;\
+                                        PORTB = SPI0_SS_BIT;\
+                                        SPCR  = 0x50;\
+                                        SPSR  = 0x01
+    #else
+        #define SPI0_Init()				DDRB  |= SPI0_SS_BIT|SPI0_SCLK_BIT|SPI0_MOSI_BIT|LEDConn_BIT;\
+                                        DDRB  &= ~SPI0_MISO_BIT;\
+                                        PORTB = SPI0_SS_BIT;\
+                                        SPCR  = 0x50;\
+                                        SPSR  = 0x01
+    #endif
 #endif
 
 //ZG2100 SPI HAL
@@ -118,7 +147,11 @@
 #define ZG2100_SpiRecvData				SPI0_RxData
 
 
-#define ZG2100_CS_BIT					BIT2
+#if defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    #define ZG2100_CS_BIT					BIT0
+#else
+    #define ZG2100_CS_BIT					BIT2
+#endif
 #define ZG2100_CS_DDR					DDRB
 #define ZG2100_CS_PORT					PORTB
 
@@ -126,9 +159,15 @@
 #define ZG2100_CSon()					(ZG2100_CS_PORT |= ZG2100_CS_BIT)
 #define ZG2100_CSoff()					(ZG2100_CS_PORT &= ~ZG2100_CS_BIT)
 
-#define LEDConn_BIT					BIT1
-#define LEDConn_DDR					DDRB
-#define LEDConn_PORT				PORTB
+#if defined(__AVR_ATmega128__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+    #define LEDConn_BIT					BIT6
+    #define LEDConn_DDR					DDRH
+    #define LEDConn_PORT				PORTH
+#else
+    #define LEDConn_BIT					BIT1
+    #define LEDConn_DDR					DDRB
+    #define LEDConn_PORT				PORTB
+#endif
 
 #define LED0_BIT					BIT0
 #define LED0_DDR					DDRC
